@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+specVersion: "2.5"
+metadata:
+  name: fioneer.AdjustmentHub
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        log: 4
+        target:
+          url: https://10.161.65.25:44300
+          client: "110"
+          auth: basic
+        credentials:
+          username: env:USERNAME
+          password: env:PASSWORD
+        app:
+          name: "/FC1F/ADJUSTMENT_HUB"
+          description: "Adjustment HUB Application"
+          package: "/FC1F/ADJUSTMENT_HUB_UI"
+          transport: "DC1K001696"
+        exclude:
+          - /test/
+        ignoreCertError: true
+        strictSsl: false
