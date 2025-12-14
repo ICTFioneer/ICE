@@ -1,0 +1,39 @@
+"routing": {
+  "config": {
+    "routerClass": "sap.m.routing.Router",
+    "viewType": "XML",
+    "async": true,
+    "viewPath": "ice.view",
+    "controlAggregation": "pages",
+    "controlId": "app",
+    "clearControlAggregation": false
+  },
+  "routes": [
+    {
+      "name": "RouteMain",
+      "pattern": ":?query:",
+      "target": ["TargetMain"]
+    },
+    {
+      "name": "RouteDetail",
+      "pattern": "detail/{CompanyCode}/{TradingPartner}/{FinalBreakCode}",
+      "target": ["TargetDetail"]
+    }
+  ],
+  "targets": {
+    "TargetMain": {
+      "viewType": "XML",
+      "transition": "slide",
+      "clearControlAggregation": false,
+      "viewId": "Main",
+      "viewName": "Main"
+    },
+    "TargetDetail": {
+      "viewType": "XML",
+      "transition": "slide",
+      "clearControlAggregation": false,
+      "viewId": "Detail",
+      "viewName": "Detail"
+    }
+  }
+}
