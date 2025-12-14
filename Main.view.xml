@@ -1,0 +1,26 @@
+<smartTable:SmartTable
+  id="smartTable"
+  entitySet="TeamViewL1Set"
+  smartFilterId="smartFilterBar"
+  tableType="ResponsiveTable"
+  useVariantManagement="true"
+  useTablePersonalisation="true"
+  enableAutoBinding="true"
+  header="Items"
+  showRowCount="true"
+  persistencyKey="SmartTableRefApp_Explored">
+
+  <smartTable:customToolbar>
+    <OverflowToolbar>
+      <ToolbarSpacer/>
+      <Button text="{i18n>glPreperation}" type="Emphasized" press=".onGoPosting"/>
+    </OverflowToolbar>
+  </smartTable:customToolbar>
+
+  <Table id="innerTable" mode="MultiSelect" itemPress=".onItemPress">
+    <items>
+      <ColumnListItem type="Navigation"/>
+    </items>
+  </Table>
+
+</smartTable:SmartTable>
