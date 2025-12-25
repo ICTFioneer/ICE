@@ -1,85 +1,70 @@
-// webapp/controller/DetailL2.controller.js
+// webapp/controller/DetailL2Product.controller.js
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/model/json/JSONModel",
-  "sap/ui/model/Filter",
-  "sap/ui/model/FilterOperator",
   "sap/ui/core/routing/History"
-], function (Controller, JSONModel, Filter, FilterOperator, History) {
+], function (Controller, JSONModel, History) {
   "use strict";
 
-  return Controller.extend("ice.controller.DetailL2", {
+  return Controller.extend("ice.controller.DetailL2Product", {
 
     onInit: function () {
-      // view model (ključevi koji moraju uvek da važe)
       this.getView().setModel(new JSONModel({
         keys: {
           ICERunDate: null,
           CompanyCode: "",
           TradingPartner: "",
           FinalBreakCode: "",
-          Product: "" // L2 Product je key (TeamProductViewL2Set)
+          Product: ""
         }
       }), "vm");
 
-      // readiness
       this._sfbReady = false;
       this._stReady = false;
-
-      // pending
       this._pendingApply = false;
 
-      // SFB initialise gate
-      var oSfb = this.byId("sfbDetailL2");
+      var oSfb = this.byId("sfbL2Product");
       if (oSfb) {
         oSfb.attachInitialise(function () {
           this._sfbReady = true;
-
-          // kad je SFB spreman, popuni ga (ako je ruta već stigla)
-          if (this._pendingApply) {
+          if (this._pendingApply && this._stReady) {
             this._pendingApply = false;
             this._applySfbAndRebind();
           }
         }.bind(this));
       }
 
-      // SmartTable initialise gate
-      var oSt = this.byId("stDetailL2");
+      var oSt = this.byId("stL2Product");
       if (oSt) {
         oSt.attachInitialise(function () {
           this._stReady = true;
-
-          if (this._pendingApply) {
+          if (this._pendingApply && this._sfbReady) {
             this._pendingApply = false;
             this._applySfbAndRebind();
           }
         }.bind(this));
       }
 
-      // routing
       this.getOwnerComponent().getRouter()
-        .getRoute("RouteDetailL2")
+        .getRoute("RouteDetailL2Product")
         .attachPatternMatched(this._onRouteMatched, this);
     },
 
     _onRouteMatched: function (oEvent) {
       var a = oEvent.getParameter("arguments") || {};
+      var q = a["?query"] || {};
 
-      // decode args (ti šalješ encodeURIComponent)
-      var sIso = decodeURIComponent(a.ICERunDate || "");
+      var sIso = decodeURIComponent(q.iceRunDate || "");
       var dIce = sIso ? new Date(sIso) : null;
 
-      var oKeys = {
+      this.getView().getModel("vm").setProperty("/keys", {
         ICERunDate: (dIce && !isNaN(dIce.getTime())) ? dIce : null,
         CompanyCode: decodeURIComponent(a.CompanyCode || ""),
         TradingPartner: decodeURIComponent(a.TradingPartner || ""),
         FinalBreakCode: decodeURIComponent(a.FinalBreakCode || ""),
         Product: decodeURIComponent(a.Product || "")
-      };
+      });
 
-      this.getView().getModel("vm").setProperty("/keys", oKeys);
-
-      // ako nije spremno -> odloži
       if (!this._sfbReady || !this._stReady) {
         this._pendingApply = true;
         return;
@@ -89,69 +74,47 @@ sap.ui.define([
     },
 
     _applySfbAndRebind: function () {
-      var oSfb = this.byId("sfbDetailL2");
-      var oSt = this.byId("stDetailL2");
+      var oSfb = this.byId("sfbL2Product");
+      var oSt = this.byId("stL2Product");
       if (!oSfb || !oSt) { return; }
 
-      // 1) uzmi filter state sa Main-a iz sessionStorage (da se VIDI na ekranu)
-      var oMainData = {};
-      try {
-        var sData = sessionStorage.getItem("MAIN_SFB_FILTERS");
-        if (sData) {
-          oMainData = JSON.parse(sData) || {};
-        }
-      } catch (e) { /* ignore */ }
+      var oData = this._readSessionFilters();
 
-      // 2) prepiši ključne filtere (uvek moraju da budu setovani)
+      // merge keys (da se vide u poljima)
       var k = this.getView().getModel("vm").getProperty("/keys") || {};
-      oMainData.ICERunDate = k.ICERunDate || null;
-      oMainData.CompanyCode = k.CompanyCode || "";
-      oMainData.TradingPartner = k.TradingPartner || "";
-      oMainData.FinalBreakCode = k.FinalBreakCode || "";
-      oMainData.Product = k.Product || "";
+      oData.ICERunDate = k.ICERunDate || null;
+      oData.CompanyCode = k.CompanyCode || "";
+      oData.TradingPartner = k.TradingPartner || "";
+      oData.FinalBreakCode = k.FinalBreakCode || "";
+      oData.Product = k.Product || "";
 
-      // 3) setFilterData popunjava UI polja
-      oSfb.setFilterData(oMainData, true);
-
-      // 4) rebind (tek sad, kad su SFB+ST initialised)
+      oSfb.setFilterData(oData, true);
       oSt.rebindTable(true);
     },
 
-    // OVDE NIKAD ne zovemo oSfb.getFilters() -> SmartTable to sam radi preko smartFilterId
-    onBeforeRebindL2: function (oEvent) {
-      var p = oEvent.getParameter("bindingParams");
-      p.filters = p.filters || [];
+    _readSessionFilters: function () {
+      // L2 prvo uzima DETAIL, pa fallback na MAIN
+      var oData = {};
+      try {
+        var s = sessionStorage.getItem("DETAIL_SFB_FILTERS") || sessionStorage.getItem("MAIN_SFB_FILTERS");
+        if (s) { oData = JSON.parse(s) || {}; }
+      } catch (e) { /* ignore */ }
 
-      var k = this.getView().getModel("vm").getProperty("/keys") || {};
-
-      if (k.ICERunDate) p.filters.push(new Filter("ICERunDate", FilterOperator.EQ, k.ICERunDate));
-      if (k.CompanyCode) p.filters.push(new Filter("CompanyCode", FilterOperator.EQ, k.CompanyCode));
-      if (k.TradingPartner) p.filters.push(new Filter("TradingPartner", FilterOperator.EQ, k.TradingPartner));
-      if (k.FinalBreakCode) p.filters.push(new Filter("FinalBreakCode", FilterOperator.EQ, k.FinalBreakCode));
-      if (k.Product) p.filters.push(new Filter("Product", FilterOperator.EQ, k.Product));
+      // ICERunDate ako je string -> Date
+      if (typeof oData.ICERunDate === "string") {
+        var d = new Date(oData.ICERunDate);
+        oData.ICERunDate = isNaN(d.getTime()) ? null : d;
+      }
+      return oData;
     },
 
     onSearch: function () {
-      // search klik → samo rebind, ali opet sigurno
       if (!this._sfbReady || !this._stReady) {
         this._pendingApply = true;
         return;
       }
-      var oSt = this.byId("stDetailL2");
+      var oSt = this.byId("stL2Product");
       oSt && oSt.rebindTable(true);
-    },
-
-    onItemPress: function (oEvent) {
-      // klik iz tabele (itemPress iz XML)
-      var oItem = oEvent.getParameter("listItem");
-      var oCtx = oItem && oItem.getBindingContext();
-      if (!oCtx) { return; }
-
-      var oRow = oCtx.getObject() || {};
-
-      // OVDE radiš nav na sledeći page (L3) ako treba
-      // samo dopuni koje ključeve treba da nosi dalje
-      // (primer ostavljam prazno da ti ne izmišljam rutu)
     },
 
     onNavBack: function () {
