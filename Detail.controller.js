@@ -29,6 +29,7 @@ sap.ui.define([
       var oArgs = oEvent.getParameter("arguments") || {};
       var oQuery = oArgs["?query"] || {};
 
+      // --- nav keys iz rute ---
       var sIso = decodeURIComponent(oQuery.iceRunDate || "");
       var dIce = sIso ? new Date(sIso) : null;
 
@@ -39,30 +40,34 @@ sap.ui.define([
         FinalBreakCode: decodeURIComponent(oArgs.FinalBreakCode || "")
       });
 
+      // --- tab ---
       var sTab = (oQuery.tab ? decodeURIComponent(oQuery.tab) : "product") || "product";
       this.byId("itbViews").setSelectedKey(sTab);
 
-      // PRIMI FILTER STATE SA MAIN-A I POSTAVI NA DETAIL SFB
-      var sFD = oQuery.fd ? decodeURIComponent(oQuery.fd) : "";
-      if (sFD) {
-        try {
-          var oData = JSON.parse(sFD);
+      // --- PRENESI SmartFilterBar stanje iz sessionStorage ---
+      try {
+        var sData = sessionStorage.getItem("MAIN_SFB_FILTERS");
+        if (sData) {
+          var oData = JSON.parse(sData);
           var oSfb = this.byId("sfbDetail");
           if (oSfb) {
             oSfb.setFilterData(oData, true);
           }
-        } catch (e) {
-          // ignore
         }
+      } catch (e) {
+        // ignore
       }
 
-      // rebind malo odložen da SmartTable stigne da se inicijalizuje
+      // --- rebind (odložen da SmartTable stigne da se inicijalizuje) ---
       setTimeout(this._rebindActive.bind(this), 0);
     },
 
     onNavBack: function () {
       var oHistory = History.getInstance();
       var sPrevHash = oHistory.getPreviousHash();
+
+      // opciono: očisti session storage kad se vraćaš
+      // sessionStorage.removeItem("MAIN_SFB_FILTERS");
 
       if (sPrevHash !== undefined) {
         window.history.go(-1);
@@ -90,7 +95,7 @@ sap.ui.define([
       var oSt = this.byId(m[sKey]);
       if (!oSt) { return; }
 
-      // optional guard: ne zovi pre init
+      // guard: ne zovi rebind pre SmartTable init-a
       if (!oSt.getTable || !oSt.getTable()) {
         setTimeout(this._rebindActive.bind(this), 50);
         return;
@@ -107,7 +112,7 @@ sap.ui.define([
     _getAllFilters: function () {
       var a = [];
 
-      // 1) obavezni nav keys filteri
+      // 1) obavezni filteri iz navigacije
       var k = this.getView().getModel("vm").getProperty("/navKeys") || {};
 
       if (k.ICERunDate) {
@@ -123,7 +128,7 @@ sap.ui.define([
         a.push(new Filter("FinalBreakCode", FilterOperator.EQ, k.FinalBreakCode));
       }
 
-      // 2) filteri sa detail smartfilterbar-a (posle setFilterData)
+      // 2) filteri iz Detail SmartFilterBar-a
       var oSfb = this.byId("sfbDetail");
       var aSfbFilters = oSfb ? (oSfb.getFilters() || []) : [];
 
