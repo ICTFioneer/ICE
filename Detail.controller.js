@@ -185,28 +185,42 @@ sap.ui.define([
         return a.concat(aSfbFilters);
       },
   
-      onProductRowPress: function (oEvent) {
-    var oItem = oEvent.getParameter("listItem");
-    var oCtx = oItem && oItem.getBindingContext();
-    if (!oCtx) { return; }
-  
-    var oRow = oCtx.getObject() || {};
-  
-    // ključevi + product
-    var sIce = encodeURIComponent(this._toIso(oRow.ICERunDate)); // koristi tvoju helper funkciju
-    var sCC  = encodeURIComponent(oRow.CompanyCode || "");
-    var sTP  = encodeURIComponent(oRow.TradingPartner || "");
-    var sFB  = encodeURIComponent(oRow.FinalBreakCode || "");
-    var sPR  = encodeURIComponent(oRow.Product || "");
-  
-    this.getOwnerComponent().getRouter().navTo("RouteProductDetail", {
-      ICERunDate: sIce,
-      CompanyCode: sCC,
-      TradingPartner: sTP,
-      FinalBreakCode: sFB,
-      Product: sPR
-    });
-  },
+    onSegmentRowPress: function (oEvent) {
+  this._navToL2(oEvent, "segment", "Segment");
+},
+
+onCaptionRowPress: function (oEvent) {
+  this._navToL2(oEvent, "caption", "ICCategory");
+},
+onProductRowPress: function (oEvent) {
+  this._navToL2(oEvent, "product", "Product");
+},
+
+_navToL2: function (oEvent, sTab, sField) {
+  var oItem = oEvent.getParameter("listItem"); // jer je itemPress na Table
+  var oCtx = oItem && oItem.getBindingContext();
+  if (!oCtx) { return; }
+
+  var oRow = oCtx.getObject() || {};
+
+  var sIce = encodeURIComponent(this._toIso(oRow.ICERunDate));
+  var sCC  = encodeURIComponent(oRow.CompanyCode || "");
+  var sTP  = encodeURIComponent(oRow.TradingPartner || "");
+  var sFB  = encodeURIComponent(oRow.FinalBreakCode || "");
+  var sVal = encodeURIComponent(oRow[sField] || "");
+
+  this.getOwnerComponent().getRouter().navTo("RouteDetailL2", {
+    ICERunDate: sIce,
+    CompanyCode: sCC,
+    TradingPartner: sTP,
+    FinalBreakCode: sFB,
+    "?query": {
+      tab: sTab,
+      field: sField,
+      value: sVal
+    }
+  });
+},
 
   _toIso: function (v) {
     if (!v) { return ""; }
