@@ -53,6 +53,17 @@ sap.ui.define([
       this.getOwnerComponent().getRouter()
         .getRoute("RouteDetail")
         .attachPatternMatched(this._onRouteMatched, this);
+
+      var oSt = this.byId("stProduct");
+if (oSt) {
+  oSt.attachInitialise(function () {
+    var oTable = oSt.getTable();
+    if (oTable && oTable.attachItemPress) {
+      oTable.attachItemPress(this.onProductRowPress, this);
+    }
+  }.bind(this));
+}
+
     },
 
     _attachSmartTableInit: function (sId) {
@@ -172,7 +183,31 @@ sap.ui.define([
       var oSfb = this.byId("sfbDetail");
       var aSfbFilters = oSfb ? (oSfb.getFilters() || []) : [];
       return a.concat(aSfbFilters);
-    }
+    },
+
+    onProductRowPress: function (oEvent) {
+  var oItem = oEvent.getParameter("listItem");
+  var oCtx = oItem && oItem.getBindingContext();
+  if (!oCtx) { return; }
+
+  var oRow = oCtx.getObject() || {};
+
+  // ključevi + product
+  var sIce = encodeURIComponent(this._toIso(oRow.ICERunDate)); // koristi tvoju helper funkciju
+  var sCC  = encodeURIComponent(oRow.CompanyCode || "");
+  var sTP  = encodeURIComponent(oRow.TradingPartner || "");
+  var sFB  = encodeURIComponent(oRow.FinalBreakCode || "");
+  var sPR  = encodeURIComponent(oRow.Product || "");
+
+  this.getOwnerComponent().getRouter().navTo("RouteProductDetail", {
+    ICERunDate: sIce,
+    CompanyCode: sCC,
+    TradingPartner: sTP,
+    FinalBreakCode: sFB,
+    Product: sPR
+  });
+}
+
 
   });
 });
