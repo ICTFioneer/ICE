@@ -23,40 +23,38 @@ sap.ui.define([
     },
 
     onItemPress: function (oEvent) {
-      var oItem = oEvent.getParameter("listItem");
-      var oCtx = oItem && oItem.getBindingContext();
-      if (!oCtx) { return; }
+  var oItem = oEvent.getParameter("listItem");
+  var oCtx = oItem && oItem.getBindingContext();
+  if (!oCtx) { return; }
 
-      var oRow = oCtx.getObject() || {};
+  var oRow = oCtx.getObject() || {};
 
-      var sCompanyCode = encodeURIComponent(oRow.CompanyCode || "");
-      var sTradingPartner = encodeURIComponent(oRow.TradingPartner || "");
-      var sFinalBreakCode = encodeURIComponent(oRow.FinalBreakCode || "");
+  var sCompanyCode = encodeURIComponent(oRow.CompanyCode || "");
+  var sTradingPartner = encodeURIComponent(oRow.TradingPartner || "");
+  var sFinalBreakCode = encodeURIComponent(oRow.FinalBreakCode || "");
+  var sIceIso = encodeURIComponent(this._toIso(oRow.ICERunDate));
 
-      var sIceIso = encodeURIComponent(this._toIso(oRow.ICERunDate));
+  // 👉 SNIMI SmartFilterBar state u sessionStorage
+  var oSfb = this.byId("smartFilterBar");
+  if (oSfb) {
+    try {
+      sessionStorage.setItem(
+        "MAIN_SFB_FILTERS",
+        JSON.stringify(oSfb.getFilterData(true))
+      );
+    } catch (e) {}
+  }
 
-      // PRENESI FILTER STATE SA MAIN SMARTFILTERBAR-A
-      var oSfb = this.byId("smartFilterBar");
-      var sFD = "";
-      if (oSfb) {
-        try {
-          sFD = encodeURIComponent(JSON.stringify(oSfb.getFilterData(true)));
-        } catch (e) {
-          sFD = "";
-        }
-      }
-
-      this.getOwnerComponent().getRouter().navTo("RouteDetail", {
-        CompanyCode: sCompanyCode,
-        TradingPartner: sTradingPartner,
-        FinalBreakCode: sFinalBreakCode,
-        "?query": {
-          iceRunDate: sIceIso,
-          tab: "product",
-          fd: sFD
-        }
-      });
-    },
+  this.getOwnerComponent().getRouter().navTo("RouteDetail", {
+    CompanyCode: sCompanyCode,
+    TradingPartner: sTradingPartner,
+    FinalBreakCode: sFinalBreakCode,
+    "?query": {
+      iceRunDate: sIceIso,
+      tab: "product"
+    }
+  });
+},
 
     _toIso: function (v) {
       if (!v) { return ""; }
