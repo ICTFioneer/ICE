@@ -1,3 +1,4 @@
+// webapp/controller/Detail.controller.js
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/model/json/JSONModel",
@@ -19,20 +20,32 @@ sap.ui.define([
         }
       }), "vm");
 
-      // readiness flags (na controlleru, ne na kontrolama)
+      // readiness
       this._sfbReady = false;
       this._stReady = { stProduct: false, stSegment: false, stCaption: false };
 
-      // SFB initialise -> postavi flag + restore + opcionalni pending rebind
+      // pending rebind flags
+      this._pendingRebind = false;
+      this._pendingRebindBySt = { stProduct: false, stSegment: false, stCaption: false };
+
+      // SmartFilterBar initialise
       var oSfb = this.byId("sfbDetail");
       if (oSfb) {
         oSfb.attachInitialise(function () {
           this._sfbReady = true;
-          this._restoreSfbFromSession(); // popuni UI polja kad je SFB spreman
+
+          // popuni polja iz sessionStorage kad je SFB spreman
+          this._restoreSfbFromSession();
+
+          // ako je neko tražio rebind ranije, sad ga okini
+          if (this._pendingRebind) {
+            this._pendingRebind = false;
+            this._rebindActiveSafe();
+          }
         }.bind(this));
       }
 
-      // SmartTable initialise -> set flag (za svaku posebno)
+      // SmartTable initialise (za svaku tab tabelu)
       this._attachSmartTableInit("stProduct");
       this._attachSmartTableInit("stSegment");
       this._attachSmartTableInit("stCaption");
@@ -45,8 +58,16 @@ sap.ui.define([
     _attachSmartTableInit: function (sId) {
       var oSt = this.byId(sId);
       if (!oSt) { return; }
+
       oSt.attachInitialise(function () {
         this._stReady[sId] = true;
+
+        // ako baš ovu tabelu čekamo da bi rebindovali, uradi sad
+        if (this._pendingRebindBySt[sId]) {
+          this._pendingRebindBySt[sId] = false;
+          // rebind samo ako je trenutno aktivan tab taj
+          this._rebindActiveSafe();
+        }
       }.bind(this));
     },
 
@@ -67,12 +88,11 @@ sap.ui.define([
       var sTab = (oQuery.tab ? decodeURIComponent(oQuery.tab) : "product") || "product";
       this.byId("itbViews").setSelectedKey(sTab);
 
-      // Ako je SFB već spreman, odmah restore (inače će se uraditi u initialise handleru)
+      // restore odmah ako je SFB spreman (inače će uraditi initialise handler)
       if (this._sfbReady) {
         this._restoreSfbFromSession();
       }
 
-      // Uvek traži rebind, ali “safe”
       this._rebindActiveSafe();
     },
 
@@ -102,6 +122,7 @@ sap.ui.define([
       try {
         var sData = sessionStorage.getItem("MAIN_SFB_FILTERS");
         if (!sData) { return; }
+
         var oData = JSON.parse(sData);
         oSfb.setFilterData(oData, true);
       } catch (e) {
@@ -110,8 +131,11 @@ sap.ui.define([
     },
 
     _rebindActiveSafe: function () {
-      // ne rebinduj dok SFB nije spreman (da getFilters ne baca warning)
-      if (!this._sfbReady) { return; }
+      // 1) SFB gate: ako nije spreman -> zapamti i izađi
+      if (!this._sfbReady) {
+        this._pendingRebind = true;
+        return;
+      }
 
       var sKey = this.byId("itbViews").getSelectedKey();
       var m = { product: "stProduct", segment: "stSegment", caption: "stCaption" };
@@ -120,22 +144,13 @@ sap.ui.define([
       var oSt = this.byId(sId);
       if (!oSt) { return; }
 
-      // ako SmartTable još nije inicijalizovan -> zakači ONCE initialise pa rebind
+      // 2) SmartTable gate: ako nije spreman -> zapamti za tu tabelu i izađi
       if (!this._stReady[sId]) {
-        if (!this._pendingRebind) { this._pendingRebind = {}; }
-        if (this._pendingRebind[sId]) { return; } // već zakačeno
-        this._pendingRebind[sId] = true;
-
-        oSt.attachInitialise(function () {
-          this._stReady[sId] = true;
-          this._pendingRebind[sId] = false;
-          oSt.rebindTable(true);
-        }.bind(this));
-
+        this._pendingRebindBySt[sId] = true;
         return;
       }
 
-      // spreman je
+      // 3) Sve spremno -> rebind
       oSt.rebindTable(true);
     },
 
@@ -146,17 +161,16 @@ sap.ui.define([
 
     _getAllFilters: function () {
       var a = [];
-      var k = this.getView().getModel("vm").getProperty("/navKeys") || {};
 
+      var k = this.getView().getModel("vm").getProperty("/navKeys") || {};
       if (k.ICERunDate) a.push(new Filter("ICERunDate", FilterOperator.EQ, k.ICERunDate));
       if (k.CompanyCode) a.push(new Filter("CompanyCode", FilterOperator.EQ, k.CompanyCode));
       if (k.TradingPartner) a.push(new Filter("TradingPartner", FilterOperator.EQ, k.TradingPartner));
       if (k.FinalBreakCode) a.push(new Filter("FinalBreakCode", FilterOperator.EQ, k.FinalBreakCode));
 
-      // SFB filteri samo kad je ready (ovde jeste, jer _rebindActiveSafe to garantuje)
+      // SFB je spreman (rebind ga garantuje), pa možemo getFilters
       var oSfb = this.byId("sfbDetail");
       var aSfbFilters = oSfb ? (oSfb.getFilters() || []) : [];
-      
       return a.concat(aSfbFilters);
     }
 
