@@ -20,16 +20,21 @@ sap.ui.define([
         }
       }), "vm");
 
-      this.getOwnerComponent().getRouter()
+      this.getOwnerComponent()
+        .getRouter()
         .getRoute("RouteDetail")
         .attachPatternMatched(this._onRouteMatched, this);
     },
+
+    /* =========================================================== */
+    /* =============== ROUTE HANDLING ============================= */
+    /* =========================================================== */
 
     _onRouteMatched: function (oEvent) {
       var oArgs = oEvent.getParameter("arguments") || {};
       var oQuery = oArgs["?query"] || {};
 
-      // --- nav keys iz rute ---
+      // --- nav keys ---
       var sIso = decodeURIComponent(oQuery.iceRunDate || "");
       var dIce = sIso ? new Date(sIso) : null;
 
@@ -44,29 +49,18 @@ sap.ui.define([
       var sTab = (oQuery.tab ? decodeURIComponent(oQuery.tab) : "product") || "product";
       this.byId("itbViews").setSelectedKey(sTab);
 
-      // --- PRENESI SmartFilterBar stanje iz sessionStorage ---
-      try {
-        var sData = sessionStorage.getItem("MAIN_SFB_FILTERS");
-        if (sData) {
-          var oData = JSON.parse(sData);
-          var oSfb = this.byId("sfbDetail");
-          if (oSfb) {
-            oSfb.setFilterData(oData, true);
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
+      // --- restore SmartFilterBar state (SAFE) ---
+      this._restoreSmartFilterBar();
 
-      // --- rebind (odložen da SmartTable stigne da se inicijalizuje) ---
-      setTimeout(this._rebindActive.bind(this), 0);
+      // --- trigger rebind (SAFE) ---
+      this._rebindActiveSmartTable();
     },
 
     onNavBack: function () {
       var oHistory = History.getInstance();
       var sPrevHash = oHistory.getPreviousHash();
 
-      // opciono: očisti session storage kad se vraćaš
+      // opciono: očisti filtere kad se vratiš
       // sessionStorage.removeItem("MAIN_SFB_FILTERS");
 
       if (sPrevHash !== undefined) {
@@ -76,15 +70,52 @@ sap.ui.define([
       }
     },
 
+    /* =========================================================== */
+    /* =============== SMART FILTER BAR =========================== */
+    /* =========================================================== */
+
+    _restoreSmartFilterBar: function () {
+      var oSfb = this.byId("sfbDetail");
+      if (!oSfb) { return; }
+
+      var sData;
+      try {
+        sData = sessionStorage.getItem("MAIN_SFB_FILTERS");
+      } catch (e) {
+        return;
+      }
+      if (!sData) { return; }
+
+      var oData;
+      try {
+        oData = JSON.parse(sData);
+      } catch (e) {
+        return;
+      }
+
+      // ✔ mora se čekati initialise
+      oSfb.attachInitialise(function () {
+        oSfb.setFilterData(oData, true);
+      });
+    },
+
+    /* =========================================================== */
+    /* =============== TAB / SEARCH =============================== */
+    /* =========================================================== */
+
     onSearch: function () {
-      this._rebindActive();
+      this._rebindActiveSmartTable();
     },
 
     onTabSelect: function () {
-      this._rebindActive();
+      this._rebindActiveSmartTable();
     },
 
-    _rebindActive: function () {
+    /* =========================================================== */
+    /* =============== SMART TABLE HANDLING ======================= */
+    /* =========================================================== */
+
+    _rebindActiveSmartTable: function () {
       var sKey = this.byId("itbViews").getSelectedKey();
       var m = {
         product: "stProduct",
@@ -95,24 +126,28 @@ sap.ui.define([
       var oSt = this.byId(m[sKey]);
       if (!oSt) { return; }
 
-      // guard: ne zovi rebind pre SmartTable init-a
-      if (!oSt.getTable || !oSt.getTable()) {
-        setTimeout(this._rebindActive.bind(this), 50);
+      // ✔ ako je već inicijalizovan
+      if (oSt.getTable && oSt.getTable()) {
+        oSt.rebindTable(true);
         return;
       }
 
-      oSt.rebindTable(true);
+      // ✔ ako nije – čekaj initialise
+      oSt.attachInitialise(function () {
+        oSt.rebindTable(true);
+      });
     },
 
     onBeforeRebindAny: function (oEvent) {
       var oBindingParams = oEvent.getParameter("bindingParams");
-      oBindingParams.filters = (oBindingParams.filters || []).concat(this._getAllFilters());
+      oBindingParams.filters = (oBindingParams.filters || [])
+        .concat(this._getAllFilters());
     },
 
     _getAllFilters: function () {
       var a = [];
 
-      // 1) obavezni filteri iz navigacije
+      // 1) nav keys
       var k = this.getView().getModel("vm").getProperty("/navKeys") || {};
 
       if (k.ICERunDate) {
@@ -128,7 +163,7 @@ sap.ui.define([
         a.push(new Filter("FinalBreakCode", FilterOperator.EQ, k.FinalBreakCode));
       }
 
-      // 2) filteri iz Detail SmartFilterBar-a
+      // 2) SmartFilterBar filters
       var oSfb = this.byId("sfbDetail");
       var aSfbFilters = oSfb ? (oSfb.getFilters() || []) : [];
 
