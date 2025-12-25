@@ -29,7 +29,15 @@
               useTablePersonalisation="true"
               enableAutoBinding="false"
               beforeRebindTable=".onBeforeRebindAny"
-            />
+              initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+            >
+              
+            <Table  mode="MultiSelect"  itemPress=".onProductRowPress">
+						<items>
+							<ColumnListItem type="Navigation"/>
+						</items>
+					</Table>
+            </smartTable:SmartTable>
           </IconTabFilter>
 
           <IconTabFilter key="segment" text="Segment View">
@@ -42,7 +50,15 @@
               useTablePersonalisation="true"
               enableAutoBinding="false"
               beforeRebindTable=".onBeforeRebindAny"
-            />
+              initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+            >
+              
+            <Table  mode="MultiSelect"  itemPress=".onProductRowPress">
+						<items>
+							<ColumnListItem type="Navigation"/>
+						</items>
+					</Table>
+            </smartTable:SmartTable>
           </IconTabFilter>
 
           <IconTabFilter key="caption" text="Caption View">
@@ -55,7 +71,16 @@
               useTablePersonalisation="true"
               enableAutoBinding="false"
               beforeRebindTable=".onBeforeRebindAny"
-            />
+              initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+
+              
+            >
+            <Table  mode="MultiSelect"  itemPress=".onProductRowPress">
+						<items>
+							<ColumnListItem type="Navigation"/>
+						</items>
+					</Table>
+            </smartTable:SmartTable>
           </IconTabFilter>
 
         </items>
@@ -64,3 +89,5 @@
     </content>
   </Page>
 </mvc:View>
+
+
