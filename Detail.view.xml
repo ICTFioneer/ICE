@@ -53,11 +53,12 @@
               initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
             >
               
-            <Table  mode="MultiSelect"  itemPress=".onProductRowPress">
-						<items>
-							<ColumnListItem type="Navigation"/>
-						</items>
-					</Table>
+        <Table mode="MultiSelect" itemPress=".onSegmentRowPress">
+  <items>
+    <ColumnListItem type="Navigation"/>
+  </items>
+</Table>
+
             </smartTable:SmartTable>
           </IconTabFilter>
 
@@ -75,11 +76,12 @@
 
               
             >
-            <Table  mode="MultiSelect"  itemPress=".onProductRowPress">
-						<items>
-							<ColumnListItem type="Navigation"/>
-						</items>
-					</Table>
+        <Table mode="MultiSelect" itemPress=".onCaptionRowPress">
+  <items>
+    <ColumnListItem type="Navigation"/>
+  </items>
+</Table>
+
             </smartTable:SmartTable>
           </IconTabFilter>
 
