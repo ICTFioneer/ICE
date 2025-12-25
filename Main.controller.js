@@ -1,3 +1,4 @@
+// webapp/controller/Main.controller.js
 sap.ui.define([
   "sap/ui/core/mvc/Controller"
 ], function (Controller) {
@@ -6,31 +7,44 @@ sap.ui.define([
   return Controller.extend("ice.controller.Main", {
 
     onInit: function () {
-      // ništa specijalno ovde; itemPress je već na Table
+      // nothing special
     },
 
     onGoPosting: function () {
-      const oSfb = this.byId("smartFilterBar");
+      var oSfb = this.byId("smartFilterBar");
       if (oSfb) {
         oSfb.search();
       } else {
-        const oSmartTable = this.byId("smartTable");
-        oSmartTable && oSmartTable.rebindTable(true);
+        var oSmartTable = this.byId("smartTable");
+        if (oSmartTable) {
+          oSmartTable.rebindTable(true);
+        }
       }
     },
 
     onItemPress: function (oEvent) {
-      const oItem = oEvent.getParameter("listItem");
-      const oCtx = oItem && oItem.getBindingContext();
+      var oItem = oEvent.getParameter("listItem");
+      var oCtx = oItem && oItem.getBindingContext();
       if (!oCtx) { return; }
 
-      const oRow = oCtx.getObject() || {};
+      var oRow = oCtx.getObject() || {};
 
-      const sCompanyCode = encodeURIComponent(oRow.CompanyCode || "");
-      const sTradingPartner = encodeURIComponent(oRow.TradingPartner || "");
-      const sFinalBreakCode = encodeURIComponent(oRow.FinalBreakCode || "");
+      var sCompanyCode = encodeURIComponent(oRow.CompanyCode || "");
+      var sTradingPartner = encodeURIComponent(oRow.TradingPartner || "");
+      var sFinalBreakCode = encodeURIComponent(oRow.FinalBreakCode || "");
 
-      const sIceIso = encodeURIComponent(this._toIso(oRow.ICERunDate));
+      var sIceIso = encodeURIComponent(this._toIso(oRow.ICERunDate));
+
+      // PRENESI FILTER STATE SA MAIN SMARTFILTERBAR-A
+      var oSfb = this.byId("smartFilterBar");
+      var sFD = "";
+      if (oSfb) {
+        try {
+          sFD = encodeURIComponent(JSON.stringify(oSfb.getFilterData(true)));
+        } catch (e) {
+          sFD = "";
+        }
+      }
 
       this.getOwnerComponent().getRouter().navTo("RouteDetail", {
         CompanyCode: sCompanyCode,
@@ -38,7 +52,8 @@ sap.ui.define([
         FinalBreakCode: sFinalBreakCode,
         "?query": {
           iceRunDate: sIceIso,
-          tab: "product"
+          tab: "product",
+          fd: sFD
         }
       });
     },
@@ -50,12 +65,12 @@ sap.ui.define([
         return v.toISOString();
       }
 
-      const m = /\/Date\((\d+)\)\//.exec(String(v));
+      // OData V2 "/Date(....)/"
+      var m = /\/Date\((\d+)\)\//.exec(String(v));
       if (m && m[1]) {
-        const d = new Date(Number(m[1]));
+        var d = new Date(Number(m[1]));
         return isNaN(d.getTime()) ? "" : d.toISOString();
       }
-
 
       return String(v);
     }
