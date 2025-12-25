@@ -206,7 +206,19 @@ if (oSt) {
     FinalBreakCode: sFB,
     Product: sPR
   });
+},
+
+    _toIso: function (v) {
+  if (!v) { return ""; }
+  if (v instanceof Date) { return v.toISOString(); }
+  var m = /\/Date\((\d+)\)\//.exec(String(v));
+  if (m && m[1]) {
+    var d = new Date(Number(m[1]));
+    return isNaN(d.getTime()) ? "" : d.toISOString();
+  }
+  return String(v);
 }
+
 
 
   });
