@@ -20,15 +20,31 @@ sap.ui.define([
         }
       }), "vm");
 
+      // flag za SmartFilterBar readiness
+      this._bSfbReady = false;
+      this._bPendingRebind = false;
+
+      var oSfb = this.byId("sfbDetail");
+      if (oSfb) {
+        oSfb.attachInitialise(function () {
+          this._bSfbReady = true;
+
+          // restore filter data (ako postoji) kad je SFB spreman -> popuni polja
+          this._restoreSmartFilterBar();
+
+          // ako smo čekali rebind, okini sad
+          if (this._bPendingRebind) {
+            this._bPendingRebind = false;
+            this._rebindActiveSmartTable();
+          }
+        }.bind(this));
+      }
+
       this.getOwnerComponent()
         .getRouter()
         .getRoute("RouteDetail")
         .attachPatternMatched(this._onRouteMatched, this);
     },
-
-    /* =========================================================== */
-    /* =============== ROUTE HANDLING ============================= */
-    /* =========================================================== */
 
     _onRouteMatched: function (oEvent) {
       var oArgs = oEvent.getParameter("arguments") || {};
@@ -49,10 +65,14 @@ sap.ui.define([
       var sTab = (oQuery.tab ? decodeURIComponent(oQuery.tab) : "product") || "product";
       this.byId("itbViews").setSelectedKey(sTab);
 
-      // --- restore SmartFilterBar state (SAFE) ---
-      this._restoreSmartFilterBar();
+      // ako SFB nije spreman, onInit initialise handler će uraditi restore + rebind
+      if (!this._bSfbReady) {
+        this._bPendingRebind = true;
+        return;
+      }
 
-      // --- trigger rebind (SAFE) ---
+      // SFB je spreman -> restore filtere i rebind
+      this._restoreSmartFilterBar();
       this._rebindActiveSmartTable();
     },
 
@@ -60,7 +80,7 @@ sap.ui.define([
       var oHistory = History.getInstance();
       var sPrevHash = oHistory.getPreviousHash();
 
-      // opciono: očisti filtere kad se vratiš
+      // opciono: očisti state kad se vratiš
       // sessionStorage.removeItem("MAIN_SFB_FILTERS");
 
       if (sPrevHash !== undefined) {
@@ -70,13 +90,20 @@ sap.ui.define([
       }
     },
 
-    /* =========================================================== */
-    /* =============== SMART FILTER BAR =========================== */
-    /* =========================================================== */
+    onSearch: function () {
+      this._rebindActiveSmartTable();
+    },
+
+    onTabSelect: function () {
+      this._rebindActiveSmartTable();
+    },
 
     _restoreSmartFilterBar: function () {
       var oSfb = this.byId("sfbDetail");
       if (!oSfb) { return; }
+
+      // SFB mora biti inicijalizovan da bi se polja popunila
+      if (!oSfb._bInitialized) { return; }
 
       var sData;
       try {
@@ -86,36 +113,21 @@ sap.ui.define([
       }
       if (!sData) { return; }
 
-      var oData;
       try {
-        oData = JSON.parse(sData);
-      } catch (e) {
+        var oData = JSON.parse(sData);
+        oSfb.setFilterData(oData, true);
+      } catch (e2) {
+        // ignore
+      }
+    },
+
+    _rebindActiveSmartTable: function () {
+      // ne rebinde-uj dok SFB nije spreman (da getFilters ne baca warning)
+      if (!this._bSfbReady) {
+        this._bPendingRebind = true;
         return;
       }
 
-      // ✔ mora se čekati initialise
-      oSfb.attachInitialise(function () {
-        oSfb.setFilterData(oData, true);
-      });
-    },
-
-    /* =========================================================== */
-    /* =============== TAB / SEARCH =============================== */
-    /* =========================================================== */
-
-    onSearch: function () {
-      this._rebindActiveSmartTable();
-    },
-
-    onTabSelect: function () {
-      this._rebindActiveSmartTable();
-    },
-
-    /* =========================================================== */
-    /* =============== SMART TABLE HANDLING ======================= */
-    /* =========================================================== */
-
-    _rebindActiveSmartTable: function () {
       var sKey = this.byId("itbViews").getSelectedKey();
       var m = {
         product: "stProduct",
@@ -126,22 +138,24 @@ sap.ui.define([
       var oSt = this.byId(m[sKey]);
       if (!oSt) { return; }
 
-      // ✔ ako je već inicijalizovan
-      if (oSt.getTable && oSt.getTable()) {
+      // pouzdan flag (SmartTable init)
+      if (oSt._bIsInitialized) {
         oSt.rebindTable(true);
         return;
       }
 
-      // ✔ ako nije – čekaj initialise
-      oSt.attachInitialise(function () {
-        oSt.rebindTable(true);
-      });
+      // čekaj initialise, ali samo jednom
+      if (!oSt._rebindAttached) {
+        oSt._rebindAttached = true;
+        oSt.attachInitialise(function () {
+          oSt.rebindTable(true);
+        });
+      }
     },
 
     onBeforeRebindAny: function (oEvent) {
       var oBindingParams = oEvent.getParameter("bindingParams");
-      oBindingParams.filters = (oBindingParams.filters || [])
-        .concat(this._getAllFilters());
+      oBindingParams.filters = (oBindingParams.filters || []).concat(this._getAllFilters());
     },
 
     _getAllFilters: function () {
@@ -150,23 +164,18 @@ sap.ui.define([
       // 1) nav keys
       var k = this.getView().getModel("vm").getProperty("/navKeys") || {};
 
-      if (k.ICERunDate) {
-        a.push(new Filter("ICERunDate", FilterOperator.EQ, k.ICERunDate));
-      }
-      if (k.CompanyCode) {
-        a.push(new Filter("CompanyCode", FilterOperator.EQ, k.CompanyCode));
-      }
-      if (k.TradingPartner) {
-        a.push(new Filter("TradingPartner", FilterOperator.EQ, k.TradingPartner));
-      }
-      if (k.FinalBreakCode) {
-        a.push(new Filter("FinalBreakCode", FilterOperator.EQ, k.FinalBreakCode));
-      }
+      if (k.ICERunDate) a.push(new Filter("ICERunDate", FilterOperator.EQ, k.ICERunDate));
+      if (k.CompanyCode) a.push(new Filter("CompanyCode", FilterOperator.EQ, k.CompanyCode));
+      if (k.TradingPartner) a.push(new Filter("TradingPartner", FilterOperator.EQ, k.TradingPartner));
+      if (k.FinalBreakCode) a.push(new Filter("FinalBreakCode", FilterOperator.EQ, k.FinalBreakCode));
 
-      // 2) SmartFilterBar filters
+      // 2) SFB filteri samo ako je inicijalizovan
       var oSfb = this.byId("sfbDetail");
-      var aSfbFilters = oSfb ? (oSfb.getFilters() || []) : [];
+      if (!oSfb || !oSfb._bInitialized) {
+        return a;
+      }
 
+      var aSfbFilters = oSfb.getFilters() || [];
       return a.concat(aSfbFilters);
     }
 
