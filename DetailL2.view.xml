@@ -1,0 +1,87 @@
+<mvc:View
+  controllerName="ice.controller.DetailL2"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:smartTable="sap.ui.comp.smarttable"
+  xmlns:smartFilter="sap.ui.comp.smartfilterbar">
+
+  <Page id="detailL2Page" title="My Reports (L2)" showNavButton="true" navButtonPress=".onNavBack">
+    <content>
+
+      <smartFilter:SmartFilterBar
+        id="sfbDetailL2"
+        entitySet="TeamProductViewL2Set"
+        liveMode="false"
+        useToolbar="true"
+        search=".onSearch"
+      />
+
+      <IconTabBar id="itbViewsL2" selectedKey="product" select=".onTabSelect">
+        <items>
+
+          <IconTabFilter key="product" text="Product View">
+            <smartTable:SmartTable
+              id="stProductL2"
+              entitySet="TeamProductViewL2Set"
+              smartFilterId="sfbDetailL2"
+              tableType="ResponsiveTable"
+              useVariantManagement="true"
+              useTablePersonalisation="true"
+              enableAutoBinding="false"
+              beforeRebindTable=".onBeforeRebindAny"
+              initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+            >
+              <Table mode="MultiSelect">
+                <items>
+                  <ColumnListItem type="Navigation"/>
+                </items>
+              </Table>
+            </smartTable:SmartTable>
+          </IconTabFilter>
+
+          <IconTabFilter key="segment" text="Segment View">
+            <smartTable:SmartTable
+              id="stSegmentL2"
+              entitySet="TeamSegmentViewL2Set"
+              smartFilterId="sfbDetailL2"
+              tableType="ResponsiveTable"
+              useVariantManagement="true"
+              useTablePersonalisation="true"
+              enableAutoBinding="false"
+              beforeRebindTable=".onBeforeRebindAny"
+              initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+            >
+              <Table mode="MultiSelect">
+                <items>
+                  <ColumnListItem type="Navigation"/>
+                </items>
+              </Table>
+            </smartTable:SmartTable>
+          </IconTabFilter>
+
+          <IconTabFilter key="caption" text="Caption View">
+            <smartTable:SmartTable
+              id="stCaptionL2"
+              entitySet="TeamCategoryViewL2Set"
+              smartFilterId="sfbDetailL2"
+              tableType="ResponsiveTable"
+              useVariantManagement="true"
+              useTablePersonalisation="true"
+              enableAutoBinding="false"
+              beforeRebindTable=".onBeforeRebindAny"
+              initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+            >
+              <Table mode="MultiSelect">
+                <items>
+                  <ColumnListItem type="Navigation"/>
+                </items>
+              </Table>
+            </smartTable:SmartTable>
+          </IconTabFilter>
+
+        </items>
+      </IconTabBar>
+
+    </content>
+  </Page>
+</mvc:View>
