@@ -19,11 +19,12 @@
       "pattern": "detail/{CompanyCode}/{TradingPartner}/{FinalBreakCode}",
       "target": ["TargetDetail"]
     },
-    {
-  "name": "RouteProductDetail",
-  "pattern": "product/{ICERunDate}/{CompanyCode}/{TradingPartner}/{FinalBreakCode}/{Product}",
-  "target": "TargetProductDetail"
+   {
+  "name": "RouteDetailL2",
+  "pattern": "detailL2/{ICERunDate}/{CompanyCode}/{TradingPartner}/{FinalBreakCode}",
+  "target": "TargetDetailL2"
 }
+
 
   ],
   "targets": {
@@ -41,12 +42,13 @@
       "viewId": "Detail",
       "viewName": "Detail"
     },
-    "TargetProductDetail": {
+"TargetDetailL2": {
   "viewType": "XML",
-  "viewName": "ProductDetail",
-  "viewId": "ProductDetail",
+  "viewName": "DetailL2",
+  "viewId": "DetailL2",
   "transition": "slide"
 }
+
 
   }
 }
