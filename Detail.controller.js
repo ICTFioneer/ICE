@@ -185,19 +185,20 @@ sap.ui.define([
         return a.concat(aSfbFilters);
       },
   
-    onSegmentRowPress: function (oEvent) {
-  this._navToL2(oEvent, "segment", "Segment");
+onProductRowPress: function (oEvent) {
+  this._navToDetailL2(oEvent, "product", "TeamProductViewL2Set", "Product");
+},
+
+onSegmentRowPress: function (oEvent) {
+  this._navToDetailL2(oEvent, "segment", "TeamSegmentViewL2Set", "Segment");
 },
 
 onCaptionRowPress: function (oEvent) {
-  this._navToL2(oEvent, "caption", "ICCategory");
-},
-onProductRowPress: function (oEvent) {
-  this._navToL2(oEvent, "product", "Product");
+  this._navToDetailL2(oEvent, "caption", "TeamCategoryViewL2Set", "ICCategory");
 },
 
-_navToL2: function (oEvent, sTab, sField) {
-  var oItem = oEvent.getParameter("listItem"); // jer je itemPress na Table
+_navToDetailL2: function (oEvent, sViewKey, sEntitySetL2, sDrillField) {
+  var oItem = oEvent.getParameter("listItem");
   var oCtx = oItem && oItem.getBindingContext();
   if (!oCtx) { return; }
 
@@ -207,7 +208,7 @@ _navToL2: function (oEvent, sTab, sField) {
   var sCC  = encodeURIComponent(oRow.CompanyCode || "");
   var sTP  = encodeURIComponent(oRow.TradingPartner || "");
   var sFB  = encodeURIComponent(oRow.FinalBreakCode || "");
-  var sVal = encodeURIComponent(oRow[sField] || "");
+  var sVal = encodeURIComponent(oRow[sDrillField] || "");
 
   this.getOwnerComponent().getRouter().navTo("RouteDetailL2", {
     ICERunDate: sIce,
@@ -215,9 +216,10 @@ _navToL2: function (oEvent, sTab, sField) {
     TradingPartner: sTP,
     FinalBreakCode: sFB,
     "?query": {
-      tab: sTab,
-      field: sField,
-      value: sVal
+      view: sViewKey,          // product|segment|caption
+      es: sEntitySetL2,        // TeamProductViewL2Set | TeamSegmentViewL2Set | TeamCategoryViewL2Set
+      field: sDrillField,      // Product | Segment | ICCategory
+      value: sVal              // vrednost iz reda
     }
   });
 },
