@@ -5,7 +5,7 @@
   xmlns:smartTable="sap.ui.comp.smarttable"
   xmlns:smartFilter="sap.ui.comp.smartfilterbar">
 
-  <Page id="detailL2Page" title="Detail (L2)" showNavButton="true" navButtonPress=".onNavBack">
+  <Page id="detailL2Page" title="Detail L2" showNavButton="true" navButtonPress=".onNavBack">
     <content>
 
       <smartFilter:SmartFilterBar
@@ -25,8 +25,15 @@
         useTablePersonalisation="true"
         enableAutoBinding="false"
         beforeRebindTable=".onBeforeRebindL2"
-        initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,LegalEntityName,Currency,TradingPartnerName,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
-      />
+        initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem">
+
+        <Table mode="MultiSelect" itemPress=".onItemPress">
+          <items>
+            <ColumnListItem type="Navigation"/>
+          </items>
+        </Table>
+
+      </smartTable:SmartTable>
 
     </content>
   </Page>
