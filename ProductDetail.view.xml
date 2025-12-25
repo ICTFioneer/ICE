@@ -1,0 +1,32 @@
+<mvc:View
+  controllerName="ice.controller.ProductDetail"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:smartTable="sap.ui.comp.smarttable"
+  xmlns:smartFilter="sap.ui.comp.smartfilterbar">
+
+  <Page id="productDetailPage" title="Product Detail" showNavButton="true" navButtonPress=".onNavBack">
+    <content>
+
+      <smartFilter:SmartFilterBar
+        id="sfbProductDetail"
+        entitySet="TeamProductViewL2Set"
+        liveMode="false"
+        useToolbar="true"
+        search=".onSearch"
+      />
+
+      <smartTable:SmartTable
+        id="stProductDetail"
+        entitySet="TeamProductViewL2Set"
+        smartFilterId="sfbProductDetail"
+        tableType="ResponsiveTable"
+        useVariantManagement="true"
+        useTablePersonalisation="true"
+        enableAutoBinding="false"
+        beforeRebindTable=".onBeforeRebind"
+      />
+
+    </content>
+  </Page>
+</mvc:View>
