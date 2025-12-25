@@ -156,6 +156,7 @@ sap.ui.define([
       // SFB filteri samo kad je ready (ovde jeste, jer _rebindActiveSafe to garantuje)
       var oSfb = this.byId("sfbDetail");
       var aSfbFilters = oSfb ? (oSfb.getFilters() || []) : [];
+      
       return a.concat(aSfbFilters);
     }
 
