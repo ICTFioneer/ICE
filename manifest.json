@@ -18,7 +18,13 @@
       "name": "RouteDetail",
       "pattern": "detail/{CompanyCode}/{TradingPartner}/{FinalBreakCode}",
       "target": ["TargetDetail"]
-    }
+    },
+    {
+  "name": "RouteProductDetail",
+  "pattern": "product/{ICERunDate}/{CompanyCode}/{TradingPartner}/{FinalBreakCode}/{Product}",
+  "target": "TargetProductDetail"
+}
+
   ],
   "targets": {
     "TargetMain": {
@@ -34,6 +40,13 @@
       "clearControlAggregation": false,
       "viewId": "Detail",
       "viewName": "Detail"
-    }
+    },
+    "TargetProductDetail": {
+  "viewType": "XML",
+  "viewName": "ProductDetail",
+  "viewId": "ProductDetail",
+  "transition": "slide"
+}
+
   }
 }
