@@ -24,15 +24,12 @@
         useVariantManagement="true"
         useTablePersonalisation="true"
         enableAutoBinding="false"
-        beforeRebindTable=".onBeforeRebindL2"
-        initiallyVisibleFields="ICERunDate,LegalEntity,CompanyCode,TradingPartner,FinalBreakCode,Product,Segment,ICCategory,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem">
-
-        <Table mode="MultiSelect" itemPress=".onItemPress">
+      >
+        <Table mode="MultiSelect" itemPress=".onRowPress">
           <items>
             <ColumnListItem type="Navigation"/>
           </items>
         </Table>
-
       </smartTable:SmartTable>
 
     </content>
