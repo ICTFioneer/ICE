@@ -193,4 +193,13 @@ sap.ui.define([
       this.getOwnerComponent().getRouter().navTo(sRoute, {
         CompanyCode: oRow.CompanyCode || "",
         TradingPartner: oRow.TradingPartner || "",
-        FinalBreakCode: oRow.FinalBreakC
+        FinalBreakCode: oRow.FinalBreakCode || "",
+        KeyValue: sKeyValue,
+        "?query": {
+          iceRunDate: DateUtil.toIso(oRow.ICERunDate)
+        }
+      });
+    }
+
+  });
+});
