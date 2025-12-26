@@ -14,16 +14,27 @@
       "pattern": ":?query:",
       "target": ["TargetMain"]
     },
-    {
-      "name": "RouteDetail",
-      "pattern": "detail/{CompanyCode}/{TradingPartner}/{FinalBreakCode}",
-      "target": ["TargetDetail"]
-    },
    {
-  "name": "RouteDetailL2",
-  "pattern": "detailL2/{ICERunDate}/{CompanyCode}/{TradingPartner}/{FinalBreakCode}",
-  "target": "TargetDetailL2"
-}
+          "name": "RouteDetail",
+          "pattern": "detail/{CompanyCode}/{TradingPartner}/{FinalBreakCode}:?query:",
+          "target": "TargetDetail"
+        },
+
+        {
+          "name": "RouteDetailL2Product",
+          "pattern": "detailL2/product/{CompanyCode}/{TradingPartner}/{FinalBreakCode}/{KeyValue}:?query:",
+          "target": "TargetDetailL2Product"
+        },
+        {
+          "name": "RouteDetailL2Segment",
+          "pattern": "detailL2/segment/{CompanyCode}/{TradingPartner}/{FinalBreakCode}/{KeyValue}:?query:",
+          "target": "TargetDetailL2Segment"
+        },
+        {
+          "name": "RouteDetailL2Category",
+          "pattern": "detailL2/category/{CompanyCode}/{TradingPartner}/{FinalBreakCode}/{KeyValue}:?query:",
+          "target": "TargetDetailL2Category"
+        }
 
 
   ],
@@ -35,20 +46,26 @@
       "viewId": "Main",
       "viewName": "Main"
     },
-    "TargetDetail": {
-      "viewType": "XML",
-      "transition": "slide",
-      "clearControlAggregation": false,
-      "viewId": "Detail",
-      "viewName": "Detail"
-    },
-"TargetDetailL2": {
-  "viewType": "XML",
-  "viewName": "DetailL2",
-  "viewId": "DetailL2",
-  "transition": "slide"
-}
+     "TargetDetail": {
+          "viewName": "Detail",
+          "viewId": "Detail",
+          "viewLevel": 2
+        },
 
-
+        "TargetDetailL2Product": {
+          "viewName": "DetailL2",
+          "viewId": "DetailL2Product",
+          "viewLevel": 3
+        },
+        "TargetDetailL2Segment": {
+          "viewName": "DetailL2",
+          "viewId": "DetailL2Segment",
+          "viewLevel": 3
+        },
+        "TargetDetailL2Category": {
+          "viewName": "DetailL2",
+          "viewId": "DetailL2Category",
+          "viewLevel": 3
+        }
   }
 }
