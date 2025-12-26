@@ -95,4 +95,53 @@ sap.ui.define([
       if (!oSfb || !oSt) { return; }
 
       // 1) set entitySet (SFB + ST)
-      oSfb.se
+      oSfb.setEntitySet(this._cfg.entitySet);
+      oSt.setEntitySet(this._cfg.entitySet);
+
+      // 2) set visible fields (po tipu L2)
+      oSt.setInitiallyVisibleFields(this._cfg.fields);
+
+      // 3) restore filters iz sessionStorage (DETAIL -> L2)
+      var oStored = {};
+      try {
+        var s = sessionStorage.getItem("DETAIL_SFB_FILTERS");
+        if (s) { oStored = JSON.parse(s) || {}; }
+      } catch (e) {}
+
+      // 4) merge + obavezni ključevi + JEDAN drill key
+      var oFD = Object.assign({}, oStored);
+      oFD.ICERunDate = this._keys.ICERunDate || null;
+      oFD.CompanyCode = this._keys.CompanyCode || "";
+      oFD.TradingPartner = this._keys.TradingPartner || "";
+      oFD.FinalBreakCode = this._keys.FinalBreakCode || "";
+      oFD[this._cfg.keyField] = this._keys.KeyValue || "";
+
+      // 5) popuni polja na ekranu i rebind
+      oSfb.setFilterData(oFD, true);
+      oSt.rebindTable(true);
+    },
+
+    onSearch: function () {
+      var oSt = this.byId("stDetailL2");
+      if (oSt && this._stReady && this._sfbReady) {
+        oSt.rebindTable(true);
+      }
+    },
+
+    onRowPress: function (oEvent) {
+      // TODO: ovde ide L3 ako budeš pravio
+      // var oItem = oEvent.getParameter("listItem"); ...
+    },
+
+    onNavBack: function () {
+      var oHistory = History.getInstance();
+      var sPrevHash = oHistory.getPreviousHash();
+      if (sPrevHash !== undefined) {
+        window.history.go(-1);
+      } else {
+        this.getOwnerComponent().getRouter().navTo("RouteMain", {}, true);
+      }
+    }
+
+  });
+});
