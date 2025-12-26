@@ -1,131 +1,98 @@
-// webapp/controller/DetailL2Product.controller.js
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/ui/model/json/JSONModel",
-  "sap/ui/core/routing/History"
-], function (Controller, JSONModel, History) {
+  "sap/ui/core/routing/History",
+  "ice/util/DateUtil"
+], function (Controller, History, DateUtil) {
   "use strict";
 
-  return Controller.extend("ice.controller.DetailL2Product", {
+  return Controller.extend("ice.controller.DetailL2", {
 
     onInit: function () {
-      this.getView().setModel(new JSONModel({
-        keys: {
-          ICERunDate: null,
-          CompanyCode: "",
-          TradingPartner: "",
-          FinalBreakCode: "",
-          Product: ""
-        }
-      }), "vm");
-
       this._sfbReady = false;
       this._stReady = false;
       this._pendingApply = false;
 
-      var oSfb = this.byId("sfbL2Product");
+      this._cfg = null;   // setuje se po ruti
+      this._keys = null;  // setuje se na match
+
+      var oSfb = this.byId("sfbDetailL2");
       if (oSfb) {
         oSfb.attachInitialise(function () {
           this._sfbReady = true;
-          if (this._pendingApply && this._stReady) {
-            this._pendingApply = false;
-            this._applySfbAndRebind();
-          }
+          this._tryApply();
         }.bind(this));
       }
 
-      var oSt = this.byId("stL2Product");
+      var oSt = this.byId("stDetailL2");
       if (oSt) {
         oSt.attachInitialise(function () {
           this._stReady = true;
-          if (this._pendingApply && this._sfbReady) {
-            this._pendingApply = false;
-            this._applySfbAndRebind();
-          }
+          this._tryApply();
         }.bind(this));
       }
 
-      this.getOwnerComponent().getRouter()
-        .getRoute("RouteDetailL2Product")
-        .attachPatternMatched(this._onRouteMatched, this);
+      var oRouter = this.getOwnerComponent().getRouter();
+      oRouter.getRoute("RouteDetailL2Product").attachPatternMatched(this._onMatchedProduct, this);
+      oRouter.getRoute("RouteDetailL2Segment").attachPatternMatched(this._onMatchedSegment, this);
+      oRouter.getRoute("RouteDetailL2Category").attachPatternMatched(this._onMatchedCategory, this);
     },
 
-    _onRouteMatched: function (oEvent) {
+    _onMatchedProduct: function (oEvent) {
+      this._cfg = {
+        entitySet: "TeamProductViewL2Set",
+        keyField: "Product",
+        fields: "ICERunDate,CompanyCode,TradingPartner,FinalBreakCode,Product,Currency,TradingPartnerName,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+      };
+      this._onMatchedCommon(oEvent);
+    },
+
+    _onMatchedSegment: function (oEvent) {
+      this._cfg = {
+        entitySet: "TeamSegmentViewL2Set",
+        keyField: "Segment",
+        fields: "ICERunDate,CompanyCode,TradingPartner,FinalBreakCode,Segment,Currency,TradingPartnerName,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+      };
+      this._onMatchedCommon(oEvent);
+    },
+
+    _onMatchedCategory: function (oEvent) {
+      this._cfg = {
+        entitySet: "TeamCategoryViewL2Set",
+        keyField: "ICCategory",
+        fields: "ICERunDate,CompanyCode,TradingPartner,FinalBreakCode,ICCategory,Currency,TradingPartnerName,ReportingUnitBalance,CounterpartyUnitBalance,BalanceDifference,Status,TPSystem"
+      };
+      this._onMatchedCommon(oEvent);
+    },
+
+    _onMatchedCommon: function (oEvent) {
       var a = oEvent.getParameter("arguments") || {};
       var q = a["?query"] || {};
 
-      var sIso = decodeURIComponent(q.iceRunDate || "");
-      var dIce = sIso ? new Date(sIso) : null;
-
-      this.getView().getModel("vm").setProperty("/keys", {
-        ICERunDate: (dIce && !isNaN(dIce.getTime())) ? dIce : null,
+      this._keys = {
+        ICERunDate: DateUtil.fromIso(q.iceRunDate || ""),
         CompanyCode: decodeURIComponent(a.CompanyCode || ""),
         TradingPartner: decodeURIComponent(a.TradingPartner || ""),
         FinalBreakCode: decodeURIComponent(a.FinalBreakCode || ""),
-        Product: decodeURIComponent(a.Product || "")
-      });
+        KeyValue: decodeURIComponent(a.KeyValue || "")
+      };
 
-      if (!this._sfbReady || !this._stReady) {
-        this._pendingApply = true;
-        return;
-      }
-
-      this._applySfbAndRebind();
+      this._pendingApply = true;
+      this._tryApply();
     },
 
-    _applySfbAndRebind: function () {
-      var oSfb = this.byId("sfbL2Product");
-      var oSt = this.byId("stL2Product");
+    _tryApply: function () {
+      if (!this._pendingApply) { return; }
+      if (!this._cfg || !this._keys) { return; }
+      if (!this._sfbReady || !this._stReady) { return; }
+
+      this._pendingApply = false;
+      this._applyAndRebind();
+    },
+
+    _applyAndRebind: function () {
+      var oSfb = this.byId("sfbDetailL2");
+      var oSt = this.byId("stDetailL2");
       if (!oSfb || !oSt) { return; }
 
-      var oData = this._readSessionFilters();
-
-      // merge keys (da se vide u poljima)
-      var k = this.getView().getModel("vm").getProperty("/keys") || {};
-      oData.ICERunDate = k.ICERunDate || null;
-      oData.CompanyCode = k.CompanyCode || "";
-      oData.TradingPartner = k.TradingPartner || "";
-      oData.FinalBreakCode = k.FinalBreakCode || "";
-      oData.Product = k.Product || "";
-
-      oSfb.setFilterData(oData, true);
-      oSt.rebindTable(true);
-    },
-
-    _readSessionFilters: function () {
-      // L2 prvo uzima DETAIL, pa fallback na MAIN
-      var oData = {};
-      try {
-        var s = sessionStorage.getItem("DETAIL_SFB_FILTERS") || sessionStorage.getItem("MAIN_SFB_FILTERS");
-        if (s) { oData = JSON.parse(s) || {}; }
-      } catch (e) { /* ignore */ }
-
-      // ICERunDate ako je string -> Date
-      if (typeof oData.ICERunDate === "string") {
-        var d = new Date(oData.ICERunDate);
-        oData.ICERunDate = isNaN(d.getTime()) ? null : d;
-      }
-      return oData;
-    },
-
-    onSearch: function () {
-      if (!this._sfbReady || !this._stReady) {
-        this._pendingApply = true;
-        return;
-      }
-      var oSt = this.byId("stL2Product");
-      oSt && oSt.rebindTable(true);
-    },
-
-    onNavBack: function () {
-      var oHistory = History.getInstance();
-      var sPrevHash = oHistory.getPreviousHash();
-      if (sPrevHash !== undefined) {
-        window.history.go(-1);
-      } else {
-        this.getOwnerComponent().getRouter().navTo("RouteMain", {}, true);
-      }
-    }
-
-  });
-});
+      // 1) set entitySet (SFB + ST)
+      oSfb.se
